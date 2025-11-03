@@ -1,40 +1,57 @@
-name: iOS Build
+name: Build
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  workflow_call:
+    inputs:
+      shouldRunKmp:
+        required: true
+        type: string
+      shouldRunAndroid:
+        required: true
+        type: string
+      shouldRunIos:
+        required: true
+        type: string
+      shouldRunDesktop:
+        required: true
+        type: string
 
 jobs:
-  ios:
-    runs-on: macos-latest
+  Android:
+    if: ${{ inputs.shouldRunKmp == 'true' || inputs.shouldRunAndroid == 'true' }}
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
+      - name: Job set up
+        uses: ./.github/actions/job-set-up
 
-      - name: Install CocoaPods
-        run: sudo gem install cocoapods
+      - run: ./gradlew :androidApp:assemble
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+  Desktop:
+    if: ${{ inputs.shouldRunKmp == 'true' || inputs.shouldRunDesktop == 'true' }}
+    runs-on: ubuntu-latest
 
-      - name: Build iOS Frameworks
-        run: |
-          ./gradlew iosArm64Binaries
-          ./gradlew iosSimulatorArm64Binaries
+    steps:
+      - uses: actions/checkout@v3
 
-      - name: Upload iOS Frameworks
-        uses: actions/upload-artifact@v4
-        with:
-          name: iOSFrameworks
-          path: |
-            composeApp/build/bin/iosArm64
-            composeApp/build/bin/iosSimulatorArm64
+      - name: Job set up
+        uses: ./.github/actions/job-set-up
+
+      - run: ./gradlew :desktopApp:assemble
+
+  iOS:
+    if: ${{ inputs.shouldRunKmp == 'true' || inputs.shouldRunIos == 'true' }}
+    runs-on: macos-12
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Job set up
+        uses: ./.github/actions/job-set-up
+
+      - name: iOS set up
+        uses: ./.github/actions/ios-set-up
+
+      - run: xcodebuild build -workspace iosApp/iosApp.xcworkspace -configuration Debug -scheme iosApp -sdk iphoneos -destination name='iPhone 14' -verbose
