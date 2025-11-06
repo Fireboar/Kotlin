@@ -108,18 +108,3 @@ compose.desktop {
         }
     }
 }
-
-
-tasks.register("runServer") {
-    group = "application"
-    description = "Start Ktor server"
-
-    dependsOn(":server:run") // benutzt den existierenden Gradle run-Task des Server-Moduls
-}
-
-tasks.register("runDesktop") {
-    group = "application"
-    description = "Start Compose Desktop app"
-
-    dependsOn(":composeApp:run") // benutzt den existierenden Gradle run-Task des Desktop-Moduls
-}
