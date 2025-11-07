@@ -8,33 +8,42 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # 1️⃣ Repository auschecken
+      # 1️⃣ Checkout repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Java für Gradle einrichten
+      # 2️⃣ Set up JDK for Gradle
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # 3️⃣ CocoaPods installieren (für KMP iOS Frameworks)
-      - name: Install CocoaPods
-        run: sudo gem install cocoapods
+      # 3️⃣ Select Xcode explicitly
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.3.app
 
-      # 4️⃣ Gradle ausführbar machen
+      # 4️⃣ Update CocoaPods repo and install pods
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods
+          pod repo update
+          pod install --project-directory=iosApp
+
+      # 5️⃣ Make Gradle executable
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # 5️⃣ iOS Frameworks bauen (für reale Geräte + Simulator)
+      # 6️⃣ Build Kotlin Multiplatform iOS frameworks
       - name: Build iOS Frameworks
         run: |
-          ./gradlew iosArm64Binaries
-          ./gradlew iosSimulatorArm64Binaries
+          ./gradlew linkDebugFrameworkIosArm64 --stacktrace --info
+          ./gradlew linkReleaseFrameworkIosArm64 --stacktrace --info
+          ./gradlew linkDebugFrameworkIosSimulatorArm64 --stacktrace --info
+          ./gradlew linkReleaseFrameworkIosSimulatorArm64 --stacktrace --info
 
-      # 6️⃣ iOS App archivieren (ohne Code Signing)
-      - name: Archive iOS App (Unsigned)
+      # 7️⃣ Archive iOS App (unsigned)
+      - name: Archive iOS App
         run: |
           xcodebuild \
             -project iosApp/iosApp.xcodeproj \
@@ -48,7 +57,7 @@ jobs:
             DEVELOPMENT_TEAM="" \
             archive
 
-      # 6.5️⃣ Dummy ExportOptions für unsigned Export erzeugen
+      # 8️⃣ Create dummy ExportOptions for unsigned export
       - name: Create unsigned ExportOptions
         run: |
           cat > iosApp/ExportOptions-Unsigned.plist <<EOF
@@ -70,7 +79,7 @@ jobs:
           </plist>
           EOF
 
-      # 7️⃣ IPA exportieren (ohne Signing, mit Dummy-TeamID)
+      # 9️⃣ Export IPA (unsigned)
       - name: Export IPA (Unsigned)
         run: |
           mkdir -p build/ipa
@@ -84,11 +93,11 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             DEVELOPMENT_TEAM=""
 
-      # 8️⃣ Inhalt prüfen
+      # 🔟 Check IPA contents
       - name: Check IPA contents
         run: ls -l build/ipa
 
-      # 9️⃣ IPA hochladen als Artifact
+      # 1️⃣1️⃣ Upload IPA artifact
       - name: Upload Unsigned IPA
         uses: actions/upload-artifact@v4
         with:
