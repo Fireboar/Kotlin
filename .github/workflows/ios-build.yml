@@ -23,18 +23,18 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # 4️⃣ Build iOS frameworks (Release)
-      - name: Build iOS Frameworks
+      # 4️⃣ Build iOS App (Release) – komplette App, nicht nur Framework
+      - name: Build iOS App
         run: |
           ./gradlew linkReleaseFrameworkIosArm64 --stacktrace --info
-          ./gradlew linkReleaseFrameworkIosSimulatorArm64 --stacktrace --info
+          ./gradlew assembleReleaseXCFramework --stacktrace --info
 
-      # 5️⃣ Create unsigned IPA for AltStore
+      # 5️⃣ Create unsigned IPA
       - name: Create unsigned IPA
         run: |
           mkdir -p build/ipa/Payload
-          # Kopiere das Release Framework ins Payload-Verzeichnis
-          cp -R composeApp/build/bin/iosArm64/releaseFramework/ComposeApp.framework build/ipa/Payload/ComposeApp.app
+          # Kopiere das komplette .app Release-Build ins Payload-Verzeichnis
+          cp -R composeApp/build/bin/iosArm64/release/ComposeApp.app build/ipa/Payload/
           cd build/ipa
           zip -r ComposeApp.ipa Payload
           cd ../..
