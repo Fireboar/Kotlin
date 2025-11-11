@@ -1,4 +1,4 @@
-name: iOS Unsigned IPA Build
+name: Build Unsigned iOS IPA
 
 on:
   workflow_dispatch:
@@ -8,91 +8,44 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # 1️⃣ Checkout repository
-      - name: Checkout Repository
+      # 1️⃣ Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up JDK for Gradle
+      # 2️⃣ Set up JDK (für Kotlin Multiplatform)
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # 3️⃣ Select Xcode explicitly
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app
-
-      # 5️⃣ Make Gradle executable
+      # 3️⃣ Make Gradle executable
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # 6️⃣ Build Kotlin Multiplatform iOS frameworks
+      # 4️⃣ Build iOS frameworks (Release)
       - name: Build iOS Frameworks
         run: |
-          ./gradlew linkDebugFrameworkIosArm64 --stacktrace --info
           ./gradlew linkReleaseFrameworkIosArm64 --stacktrace --info
-          ./gradlew linkDebugFrameworkIosSimulatorArm64 --stacktrace --info
           ./gradlew linkReleaseFrameworkIosSimulatorArm64 --stacktrace --info
 
-      # 7️⃣ Archive iOS App (unsigned)
-      - name: Archive iOS App
+      # 5️⃣ Create unsigned IPA for AltStore
+      - name: Create unsigned IPA
         run: |
-          xcodebuild \
-            -project iosApp/iosApp.xcodeproj \
-            -scheme iosApp \
-            -configuration Release \
-            -sdk iphoneos \
-            -archivePath build/iosApp.xcarchive \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            DEVELOPMENT_TEAM="" \
-            archive
+          mkdir -p build/ipa/Payload
+          # Kopiere das Release Framework ins Payload-Verzeichnis
+          cp -R composeApp/build/bin/iosArm64/releaseFramework/ComposeApp.framework build/ipa/Payload/ComposeApp.app
+          cd build/ipa
+          zip -r ComposeApp.ipa Payload
+          cd ../..
 
-      # 8️⃣ Create dummy ExportOptions for unsigned export
-      - name: Create unsigned ExportOptions
-        run: |
-          cat > iosApp/ExportOptions-Unsigned.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>ad-hoc</string>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>compileBitcode</key>
-            <false/>
-            <key>uploadSymbols</key>
-            <false/>
-            <key>teamID</key>
-            <string>0000000000</string>
-          </dict>
-          </plist>
-          EOF
-
-      # 9️⃣ Export IPA (unsigned)
-      - name: Export IPA (Unsigned)
-        run: |
-          mkdir -p build/ipa
-          xcodebuild \
-            -exportArchive \
-            -archivePath build/iosApp.xcarchive \
-            -exportPath build/ipa \
-            -exportOptionsPlist iosApp/ExportOptions-Unsigned.plist \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            DEVELOPMENT_TEAM=""
-
-      # 🔟 Check IPA contents
+      # 6️⃣ Check IPA contents
       - name: Check IPA contents
         run: ls -l build/ipa
 
-      # 1️⃣1️⃣ Upload IPA artifact
+      # 7️⃣ Upload IPA artifact
       - name: Upload Unsigned IPA
         uses: actions/upload-artifact@v4
         with:
           name: Unsigned-iOS-App
-          path: build/ipa
+          path: build/ipa/ComposeApp.ipa
