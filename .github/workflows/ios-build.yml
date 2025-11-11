@@ -27,13 +27,12 @@ jobs:
       - name: Build iOS App
         run: |
           ./gradlew linkReleaseFrameworkIosArm64 --stacktrace --info
-          ./gradlew assembleReleaseXCFramework --stacktrace --info
+          ./gradlew linkReleaseExecutableIosArm64 --stacktrace --info
 
       # 5️⃣ Create unsigned IPA
       - name: Create unsigned IPA
         run: |
           mkdir -p build/ipa/Payload
-          # Kopiere das echte .app Release-Build ins Payload-Verzeichnis
           cp -R composeApp/build/bin/iosArm64/releaseExecutable/ComposeApp.app build/ipa/Payload/
           cd build/ipa
           zip -r ComposeApp.ipa Payload
