@@ -4,15 +4,13 @@
 <plist version="1.0">
 <dict>
     <key>method</key>
-    <string>ad-hoc</string>
+    <string>development</string>
     <key>signingStyle</key>
     <string>manual</string>
     <key>compileBitcode</key>
     <false/>
-    <key>uploadBitcode</key>
-    <false/>
-    <key>stripSwiftSymbols</key>
-    <true/>
+    <key>signingCertificate</key>
+    <string></string>
     <key>teamID</key>
     <string></string>
 </dict>
