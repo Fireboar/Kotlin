@@ -18,7 +18,13 @@ kotlin {
     }
     
     listOf(
-        iosArm64(),
+        iosArm64(){
+            binaries.all {
+                freeCompilerArgs += listOf(
+                    "-linker-option", "-w" // suppress duplicate warnings
+                )
+            }
+        },
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
