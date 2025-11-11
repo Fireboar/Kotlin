@@ -24,16 +24,15 @@ jobs:
         run: chmod +x ./gradlew
 
       # 4️⃣ Build iOS App (Release) – komplette App, nicht nur Framework
-      - name: Build iOS App
+      - name: Build iOS App (Release)
         run: |
-          ./gradlew linkReleaseFrameworkIosArm64 --stacktrace --info
-          ./gradlew linkReleaseExecutableIosArm64 --stacktrace --info
+          ./gradlew :composeApp:linkReleaseFrameworkIosArm64 --stacktrace
 
       # 5️⃣ Create unsigned IPA
       - name: Create unsigned IPA
         run: |
           mkdir -p build/ipa/Payload
-          cp -R composeApp/build/bin/iosArm64/releaseExecutable/ComposeApp.app build/ipa/Payload/
+          cp -R composeApp/build/bin/iosArm64/releaseFramework/ComposeApp.framework build/ipa/Payload/ComposeApp.app
           cd build/ipa
           zip -r ComposeApp.ipa Payload
           cd ../..
