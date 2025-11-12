@@ -16,20 +16,17 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
-    listOf(
-        iosArm64(){
-            binaries.all {
-                freeCompilerArgs += listOf(
-                    "-linker-option", "-w" // suppress duplicate warnings
-                )
-            }
-        },
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
+
+    iosArm64 {
+        binaries.executable {
+            entryPoint = "main"
+            freeCompilerArgs += listOf("-linker-option", "-w")
+        }
+    }
+    iosSimulatorArm64 {
+        binaries.executable {
+            entryPoint = "main"
+            freeCompilerArgs += listOf("-linker-option", "-w")
         }
     }
     

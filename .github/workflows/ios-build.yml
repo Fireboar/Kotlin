@@ -23,27 +23,51 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # 4️⃣ Build iOS App (Release) – komplette App, nicht nur Framework
-      - name: Build iOS App (Release)
+      # 4️⃣ Build Kotlin Multiplatform iOS Frameworks
+      - name: Build iOS Frameworks
         run: |
-          ./gradlew :composeApp:linkReleaseFrameworkIosArm64 --stacktrace
+          ./gradlew :composeApp:linkReleaseFrameworkIosArm64 \
+                     :composeApp:linkReleaseFrameworkIosSimulatorArm64 \
+                     --stacktrace
 
-      # 5️⃣ Create unsigned IPA
+      # 5️⃣ Package a minimal .app for AltStore
       - name: Create unsigned IPA
         run: |
-          mkdir -p build/ipa/Payload
-          cp -R composeApp/build/bin/iosArm64/releaseFramework/ComposeApp.framework build/ipa/Payload/ComposeApp.app
+          # Ordner vorbereiten
+          mkdir -p build/ipa/Payload/ComposeApp.app
+          
+          # Kopiere Frameworks in .app
+          cp -R composeApp/build/bin/iosArm64/releaseFramework/ComposeApp.framework build/ipa/Payload/ComposeApp.app/
+          cp -R composeApp/build/bin/iosSimulatorArm64/releaseFramework/ComposeApp.framework build/ipa/Payload/ComposeApp.app/
+          
+          # Erstelle Info.plist (minimal, AltStore akzeptiert)
+          cat <<EOF > build/ipa/Payload/ComposeApp.app/Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleIdentifier</key>
+            <string>org.example.composeapp</string>
+            <key>CFBundleName</key>
+            <string>ComposeApp</string>
+            <key>CFBundleVersion</key>
+            <string>1.0</string>
+            <key>CFBundleExecutable</key>
+            <string>ComposeApp</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+          </dict>
+          </plist>
+          EOF
+          
+          # Erstelle IPA
           cd build/ipa
           zip -r ComposeApp.ipa Payload
           cd ../..
 
-      # 6️⃣ Check IPA contents
-      - name: Check IPA contents
-        run: ls -l build/ipa
-
-      # 7️⃣ Upload IPA artifact
+      # 6️⃣ Upload IPA artifact
       - name: Upload Unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: Unsigned-iOS-App
+          name: ComposeApp-Unsigned-IPA
           path: build/ipa/ComposeApp.ipa
