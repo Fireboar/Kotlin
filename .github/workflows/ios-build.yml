@@ -23,24 +23,22 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # 4️⃣ Build Kotlin Multiplatform iOS Frameworks
+      # 4️⃣ Build iOS Frameworks (Achtung: korrekter Pfad!)
       - name: Build iOS Frameworks
+        working-directory: ./
         run: |
-          ./gradlew :composeApp:linkReleaseFrameworkIosArm64 \
-                     :composeApp:linkReleaseFrameworkIosSimulatorArm64 \
+          ./gradlew composeApp:linkReleaseFrameworkIosArm64 \
+                     composeApp:linkReleaseFrameworkIosSimulatorArm64 \
                      --stacktrace
 
       # 5️⃣ Package a minimal .app for AltStore
       - name: Create unsigned IPA
         run: |
-          # Ordner vorbereiten
           mkdir -p build/ipa/Payload/ComposeApp.app
-          
-          # Kopiere Frameworks in .app
+
           cp -R composeApp/build/bin/iosArm64/releaseFramework/ComposeApp.framework build/ipa/Payload/ComposeApp.app/
           cp -R composeApp/build/bin/iosSimulatorArm64/releaseFramework/ComposeApp.framework build/ipa/Payload/ComposeApp.app/
-          
-          # Erstelle Info.plist (minimal, AltStore akzeptiert)
+
           cat <<EOF > build/ipa/Payload/ComposeApp.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -59,8 +57,7 @@ jobs:
           </dict>
           </plist>
           EOF
-          
-          # Erstelle IPA
+
           cd build/ipa
           zip -r ComposeApp.ipa Payload
           cd ../..
