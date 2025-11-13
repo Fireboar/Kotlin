@@ -1,6 +1,7 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -17,18 +18,28 @@ kotlin {
         }
     }
 
-    iosArm64 {
-        binaries.executable {
-            entryPoint = "main"
-            freeCompilerArgs += listOf("-linker-option", "-w")
+    val iosArm64Target = iosArm64()
+    val iosSimTarget = iosSimulatorArm64()
+
+    listOf(iosArm64Target, iosSimTarget).forEach { target ->
+        target.binaries.framework {
+            baseName = "ComposeApp"
         }
     }
-    iosSimulatorArm64 {
-        binaries.executable {
-            entryPoint = "main"
-            freeCompilerArgs += listOf("-linker-option", "-w")
-        }
+
+    val composeXCFramework = XCFramework("ComposeAppXCFramework")
+    composeXCFramework.add(iosArm64Target.binaries.getFramework("DEBUG"))
+    composeXCFramework.add(iosSimTarget.binaries.getFramework("DEBUG"))
+
+    tasks.register("assembleXCFramework") {
+        group = "build"
+        description = "Build ComposeApp XCFramework for iOS"
+        dependsOn(
+            iosArm64Target.binaries.getFramework("DEBUG").linkTaskProvider,
+            iosSimTarget.binaries.getFramework("DEBUG").linkTaskProvider
+        )
     }
+
     
     jvm()
     

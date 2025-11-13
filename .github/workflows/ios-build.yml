@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up JDK (für Kotlin Multiplatform)
+      # 2️⃣ Set up JDK für Kotlin Multiplatform
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -20,32 +20,30 @@ jobs:
           java-version: 17
 
       # 3️⃣ Make Gradle executable
-      - name: Make gradlew executable
+      - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      # 4️⃣ Build iOS Executables
-      - name: Build iOS Executables
+      # 4️⃣ Build iOS Frameworks
+      - name: Build iOS Frameworks
         run: |
-          ./gradlew composeApp:linkReleaseExecutableIosArm64 \
-                     composeApp:linkReleaseExecutableIosSimulatorArm64 \
-                     --stacktrace
+          ./gradlew composeApp:assembleXCFramework --stacktrace --info
 
       # 5️⃣ Package a minimal .app for AltStore
       - name: Create unsigned IPA
         run: |
           mkdir -p build/ipa/Payload/ComposeApp.app
 
-          # ✅ Kopiere das Executable aus dem iOS Arm64 Build
-          cp composeApp/build/bin/iosArm64/releaseExecutable/composeApp.kexe build/ipa/Payload/ComposeApp.app/ComposeApp
+          # Kopiere das XCFramework in die .app
+          cp -R composeApp/build/XCFrameworks/release/ComposeApp.xcframework build/ipa/Payload/ComposeApp.app/
 
-          # ✅ Erstelle ein minimalistisches Info.plist
+          # Info.plist erstellen
           cat <<EOF > build/ipa/Payload/ComposeApp.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>CFBundleIdentifier</key>
-            <string>org.example.project</string>
+            <string>org.example.composeapp</string>
             <key>CFBundleName</key>
             <string>ComposeApp</string>
             <key>CFBundleVersion</key>
@@ -58,7 +56,6 @@ jobs:
           </plist>
           EOF
 
-          # ✅ Erstelle das IPA-Archiv
           cd build/ipa
           zip -r ComposeApp.ipa Payload
           cd ../..
