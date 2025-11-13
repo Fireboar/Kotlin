@@ -23,12 +23,11 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # 4️⃣ Build iOS Frameworks (Achtung: korrekter Pfad!)
-      - name: Build iOS Frameworks
-        working-directory: ./
+      # 4️⃣ Build iOS Executables
+      - name: Build iOS Executables
         run: |
-          ./gradlew composeApp:linkReleaseFrameworkIosArm64 \
-                     composeApp:linkReleaseFrameworkIosSimulatorArm64 \
+          ./gradlew composeApp:linkReleaseExecutableIosArm64 \
+                     composeApp:linkReleaseExecutableIosSimulatorArm64 \
                      --stacktrace
 
       # 5️⃣ Package a minimal .app for AltStore
@@ -36,16 +35,17 @@ jobs:
         run: |
           mkdir -p build/ipa/Payload/ComposeApp.app
 
-          cp -R composeApp/build/bin/iosArm64/releaseFramework/ComposeApp.framework build/ipa/Payload/ComposeApp.app/
-          cp -R composeApp/build/bin/iosSimulatorArm64/releaseFramework/ComposeApp.framework build/ipa/Payload/ComposeApp.app/
+          # ✅ Kopiere das Executable aus dem iOS Arm64 Build
+          cp composeApp/build/bin/iosArm64/releaseExecutable/composeApp.kexe build/ipa/Payload/ComposeApp.app/ComposeApp
 
+          # ✅ Erstelle ein minimalistisches Info.plist
           cat <<EOF > build/ipa/Payload/ComposeApp.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>CFBundleIdentifier</key>
-            <string>org.example.composeapp</string>
+            <string>org.example.project</string>
             <key>CFBundleName</key>
             <string>ComposeApp</string>
             <key>CFBundleVersion</key>
@@ -58,6 +58,7 @@ jobs:
           </plist>
           EOF
 
+          # ✅ Erstelle das IPA-Archiv
           cd build/ipa
           zip -r ComposeApp.ipa Payload
           cd ../..
