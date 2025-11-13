@@ -31,14 +31,7 @@ kotlin {
     composeXCFramework.add(iosArm64Target.binaries.getFramework("DEBUG"))
     composeXCFramework.add(iosSimTarget.binaries.getFramework("DEBUG"))
 
-    tasks.register("assembleXCFramework") {
-        group = "build"
-        description = "Build ComposeApp XCFramework for iOS"
-        dependsOn(
-            iosArm64Target.binaries.getFramework("DEBUG").linkTaskProvider,
-            iosSimTarget.binaries.getFramework("DEBUG").linkTaskProvider
-        )
-    }
+
 
     
     jvm()

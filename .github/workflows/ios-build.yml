@@ -8,35 +8,29 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # 1️⃣ Checkout Repository
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up JDK für Kotlin Multiplatform
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # 3️⃣ Make Gradle executable
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      # 4️⃣ Build iOS Frameworks
-      - name: Build iOS Frameworks
-        run: |
-          ./gradlew composeApp:assembleXCFramework --stacktrace --info
+      - name: Build XCFramework
+        run: ./gradlew :composeApp:assembleComposeAppXCFrameworkDebugXCFramework --stacktrace --info
 
-      # 5️⃣ Package a minimal .app for AltStore
       - name: Create unsigned IPA
         run: |
           mkdir -p build/ipa/Payload/ComposeApp.app
 
-          # Kopiere das XCFramework in die .app
-          cp -R composeApp/build/XCFrameworks/release/ComposeApp.xcframework build/ipa/Payload/ComposeApp.app/
+          # Copy XCFramework into the .app
+          cp -R composeApp/build/XCFrameworks/ComposeAppXCFramework build/ipa/Payload/ComposeApp.app/
 
-          # Info.plist erstellen
+          # Create Info.plist
           cat <<EOF > build/ipa/Payload/ComposeApp.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -60,7 +54,6 @@ jobs:
           zip -r ComposeApp.ipa Payload
           cd ../..
 
-      # 6️⃣ Upload IPA artifact
       - name: Upload Unsigned IPA
         uses: actions/upload-artifact@v4
         with:
